@@ -1,0 +1,32 @@
+body {
+  font-family: Arial, sans-serif;
+  background: #101820;
+  color: white;
+  padding: 20px;
+}
+
+h1 {
+  color: #00e5ff;
+}
+
+nav {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+button {
+  background: #00e5ff;
+  border: none;
+  padding: 10px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+section {
+  background: rgba(255,255,255,0.08);
+  padding: 16px;
+  border-radius: 12px;
+  margin-bottom: 16px;
+}
