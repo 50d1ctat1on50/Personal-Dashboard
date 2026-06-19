@@ -1,0 +1,14 @@
+name: Daily Update
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 22 * * *"
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Confirm workflow works
+        run: echo "Daily dashboard update workflow is working"
