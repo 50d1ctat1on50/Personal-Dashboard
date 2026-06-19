@@ -3,39 +3,70 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Personal Dashboard</title>
+  <title>Personal Alpine Dashboard</title>
 
-  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+
   <link rel="stylesheet" href="style.css" />
 </head>
 
-<body class="bg-white text-black p-4 md:p-8 font-sans">
+<body>
 
-  <header class="brutal-card bg-teal mb-6">
-    <p class="uppercase text-sm font-black tracking-widest">Personal Command Centre</p>
-    <h1 class="text-4xl md:text-6xl font-black mt-2">Good Morning, Jed</h1>
-    <p id="dateText" class="font-bold mt-2"></p>
-  </header>
+  <div class="snow"></div>
+  <div class="aurora aurora-one"></div>
+  <div class="aurora aurora-two"></div>
 
-  <nav class="flex gap-3 overflow-x-auto mb-6 pb-2">
-    <button onclick="showTab('today')" class="brutal-button">Today</button>
-    <button onclick="showTab('competitions')" class="brutal-button">Competitions</button>
-    <button onclick="showTab('projects')" class="brutal-button">Projects</button>
-    <button onclick="showTab('fitness')" class="brutal-button">Fitness</button>
-    <button onclick="showTab('reading')" class="brutal-button">Reading</button>
-  </nav>
+  <aside class="sidebar">
+    <div class="logo">
+      <div class="logo-mark">△</div>
+      <div>
+        <strong>ALPINE</strong>
+        <span>Command Centre</span>
+      </div>
+    </div>
 
-  <main class="max-w-5xl mx-auto">
+    <nav>
+      <button onclick="showTab('today')" class="nav-btn active">Today</button>
+      <button onclick="showTab('competitions')" class="nav-btn">Competitions</button>
+      <button onclick="showTab('projects')" class="nav-btn">Projects</button>
+      <button onclick="showTab('fitness')" class="nav-btn">Fitness</button>
+      <button onclick="showTab('reading')" class="nav-btn">Reading</button>
+    </nav>
+  </aside>
+
+  <main class="dashboard">
+
+    <header class="hero glass">
+      <div>
+        <p class="eyebrow">Snow Alpine Neon Dashboard</p>
+        <h1>Good Morning, Jed</h1>
+        <p id="dateText" class="date-text"></p>
+      </div>
+      <div class="status-pill">Live Dashboard</div>
+    </header>
+
+    <section class="mountain-divider"></section>
 
     <section id="today" class="tab active">
-      <div class="brutal-card">
-        <h2 class="section-title">Today</h2>
-        <p class="font-bold">Daily priorities, prompts, reminders and important tasks will appear here.</p>
+      <div class="grid">
+        <div class="card glass kpi">
+          <span class="kpi-label">Daily Focus</span>
+          <strong>Plan the day</strong>
+          <p>Daily priorities, prompts, reminders and important tasks will appear here.</p>
+        </div>
+
+        <div class="card glass kpi neon">
+          <span class="kpi-label">Mood Check</span>
+          <strong>How do I feel?</strong>
+          <p>Capture your mindset and receive prompts for the day ahead.</p>
+        </div>
       </div>
 
-      <div class="brutal-card">
-        <h3 class="card-title">Daily Check-In</h3>
-        <ul class="font-bold list-disc ml-6 space-y-2">
+      <div class="card glass">
+        <h2>Daily Check-In</h2>
+        <ul>
           <li>How do I feel today?</li>
           <li>What is one thing I need to get done?</li>
           <li>What would make today successful?</li>
@@ -44,35 +75,35 @@
     </section>
 
     <section id="competitions" class="tab">
-      <div class="brutal-card">
-        <h2 class="section-title">Competitions</h2>
-        <p class="font-bold">Today’s top 5 free Australian competitions will appear here.</p>
+      <div class="card glass neon">
+        <h2>Today’s Top 5 Competitions</h2>
+        <p>Today’s free Australian competition links will appear here.</p>
       </div>
 
-      <div class="brutal-card">
-        <h3 class="card-title">Yesterday’s Top 5</h3>
-        <p class="font-bold">Previous competitions will appear here.</p>
+      <div class="card glass">
+        <h2>Yesterday’s Top 5</h2>
+        <p>Previous competition links will appear here.</p>
       </div>
     </section>
 
     <section id="projects" class="tab">
-      <div class="brutal-card">
-        <h2 class="section-title">Projects</h2>
-        <p class="font-bold">Commercial property alerts, businesses for sale, and active projects will appear here.</p>
+      <div class="card glass">
+        <h2>Projects</h2>
+        <p>Commercial property alerts, businesses for sale, and active projects will appear here.</p>
       </div>
     </section>
 
     <section id="fitness" class="tab">
-      <div class="brutal-card">
-        <h2 class="section-title">Fitness</h2>
-        <p class="font-bold">Gym activity, goals, weight tracking and progress review will appear here.</p>
+      <div class="card glass">
+        <h2>Fitness</h2>
+        <p>Gym activity, goals, weight tracking and progress review will appear here.</p>
       </div>
     </section>
 
     <section id="reading" class="tab">
-      <div class="brutal-card">
-        <h2 class="section-title">Reading</h2>
-        <p class="font-bold">Important reads, summaries, news and tailored learning content will appear here.</p>
+      <div class="card glass">
+        <h2>Reading</h2>
+        <p>Important reads, summaries, news and tailored learning content will appear here.</p>
       </div>
     </section>
 
@@ -88,11 +119,11 @@
       });
 
     function showTab(tabName) {
-      document.querySelectorAll(".tab").forEach(tab => {
-        tab.classList.remove("active");
-      });
-
+      document.querySelectorAll(".tab").forEach(tab => tab.classList.remove("active"));
       document.getElementById(tabName).classList.add("active");
+
+      document.querySelectorAll(".nav-btn").forEach(btn => btn.classList.remove("active"));
+      event.target.classList.add("active");
     }
   </script>
 
