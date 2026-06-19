@@ -1,32 +1,66 @@
 body {
+  margin: 0;
   font-family: Arial, sans-serif;
-  background: #101820;
+  background: linear-gradient(135deg, #07111f, #101820);
   color: white;
-  padding: 20px;
+  padding: 18px;
 }
 
-h1 {
+.hero {
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 22px;
+  padding: 22px;
+  margin-bottom: 18px;
+}
+
+.small {
   color: #00e5ff;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
 }
 
-nav {
+h1, h2, h3 {
+  margin-top: 0;
+}
+
+.tabs {
   display: flex;
   gap: 10px;
-  flex-wrap: wrap;
-  margin-bottom: 20px;
+  overflow-x: auto;
+  margin-bottom: 18px;
 }
 
-button {
+.tabs button {
   background: #00e5ff;
+  color: #06131f;
   border: none;
-  padding: 10px 14px;
-  border-radius: 8px;
+  padding: 12px 16px;
+  border-radius: 999px;
+  font-weight: bold;
   cursor: pointer;
+  white-space: nowrap;
 }
 
-section {
+.card {
   background: rgba(255,255,255,0.08);
-  padding: 16px;
-  border-radius: 12px;
-  margin-bottom: 16px;
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 18px;
+  padding: 18px;
+  margin-bottom: 14px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+}
+
+.tab {
+  display: none;
+}
+
+.tab.active {
+  display: block;
+}
+
+p {
+  color: #d8e2ef;
+  line-height: 1.5;
 }
