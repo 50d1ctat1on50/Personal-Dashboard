@@ -5,25 +5,87 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <h1>Personal Dashboard</h1>
 
-  <nav>
-    <button>Today</button>
-    <button>Competitions</button>
-    <button>Projects</button>
-    <button>Fitness</button>
-    <button>Reading</button>
+  <header class="hero">
+    <p class="small">Personal Command Centre</p>
+    <h1>Good Morning, Jed</h1>
+    <p id="dateText"></p>
+  </header>
+
+  <nav class="tabs">
+    <button onclick="showTab('today')">Today</button>
+    <button onclick="showTab('competitions')">Competitions</button>
+    <button onclick="showTab('projects')">Projects</button>
+    <button onclick="showTab('fitness')">Fitness</button>
+    <button onclick="showTab('reading')">Reading</button>
   </nav>
 
-  <section>
-    <h2>Today</h2>
-    <p>Your personal dashboard is live.</p>
-  </section>
+  <main>
+    <section id="today" class="tab active">
+      <div class="card">
+        <h2>Today</h2>
+        <p>Daily priorities, prompts, reminders and important tasks will appear here.</p>
+      </div>
 
-  <section>
-    <h2>Competitions</h2>
-    <p>Today’s top 5 competitions will appear here.</p>
-    <p>Yesterday’s top 5 competitions will appear here.</p>
-  </section>
+      <div class="card">
+        <h3>Daily Check-In</h3>
+        <p>How do I feel today?</p>
+        <p>What is one thing I need to get done?</p>
+        <p>What would make today successful?</p>
+      </div>
+    </section>
+
+    <section id="competitions" class="tab">
+      <div class="card">
+        <h2>Competitions</h2>
+        <p>Today’s top 5 free Australian competitions will appear here.</p>
+      </div>
+
+      <div class="card">
+        <h3>Yesterday’s Top 5</h3>
+        <p>Previous competitions will appear here.</p>
+      </div>
+    </section>
+
+    <section id="projects" class="tab">
+      <div class="card">
+        <h2>Projects</h2>
+        <p>Commercial property alerts, businesses for sale, and active projects will appear here.</p>
+      </div>
+    </section>
+
+    <section id="fitness" class="tab">
+      <div class="card">
+        <h2>Fitness</h2>
+        <p>Gym activity, goals, weight tracking and progress review will appear here.</p>
+      </div>
+    </section>
+
+    <section id="reading" class="tab">
+      <div class="card">
+        <h2>Reading</h2>
+        <p>Important reads, summaries, news and tailored learning content will appear here.</p>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    document.getElementById("dateText").innerText =
+      new Date().toLocaleDateString("en-AU", {
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+        year: "numeric"
+      });
+
+    function showTab(tabName) {
+      document.querySelectorAll(".tab").forEach(tab => {
+        tab.classList.remove("active");
+      });
+
+      document.getElementById(tabName).classList.add("active");
+    }
+  </script>
+
 </body>
 </html>
