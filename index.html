@@ -1,72 +1,81 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Personal Dashboard</title>
-  <link rel="stylesheet" href="style.css">
-</head>
-<body>
 
-  <header class="hero">
-    <p class="small">Personal Command Centre</p>
-    <h1>Good Morning, Jed</h1>
-    <p id="dateText"></p>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body class="bg-white text-black p-4 md:p-8 font-sans">
+
+  <header class="brutal-card bg-teal mb-6">
+    <p class="uppercase text-sm font-black tracking-widest">Personal Command Centre</p>
+    <h1 class="text-4xl md:text-6xl font-black mt-2">Good Morning, Jed</h1>
+    <p id="dateText" class="font-bold mt-2"></p>
   </header>
 
-  <nav class="tabs">
-    <button onclick="showTab('today')">Today</button>
-    <button onclick="showTab('competitions')">Competitions</button>
-    <button onclick="showTab('projects')">Projects</button>
-    <button onclick="showTab('fitness')">Fitness</button>
-    <button onclick="showTab('reading')">Reading</button>
+  <nav class="flex gap-3 overflow-x-auto mb-6 pb-2">
+    <button onclick="showTab('today')" class="brutal-button">Today</button>
+    <button onclick="showTab('competitions')" class="brutal-button">Competitions</button>
+    <button onclick="showTab('projects')" class="brutal-button">Projects</button>
+    <button onclick="showTab('fitness')" class="brutal-button">Fitness</button>
+    <button onclick="showTab('reading')" class="brutal-button">Reading</button>
   </nav>
 
-  <main>
+  <main class="max-w-5xl mx-auto">
+
     <section id="today" class="tab active">
-      <div class="card">
-        <h2>Today</h2>
-        <p>Daily priorities, prompts, reminders and important tasks will appear here.</p>
+      <div class="brutal-card">
+        <h2 class="section-title">Today</h2>
+        <p class="font-bold">Daily priorities, prompts, reminders and important tasks will appear here.</p>
       </div>
 
-      <div class="card">
-        <h3>Daily Check-In</h3>
-        <p>How do I feel today?</p>
-        <p>What is one thing I need to get done?</p>
-        <p>What would make today successful?</p>
+      <div class="brutal-card">
+        <h3 class="card-title">Daily Check-In</h3>
+        <ul class="font-bold list-disc ml-6 space-y-2">
+          <li>How do I feel today?</li>
+          <li>What is one thing I need to get done?</li>
+          <li>What would make today successful?</li>
+        </ul>
       </div>
     </section>
 
     <section id="competitions" class="tab">
-      <div class="card">
-        <h2>Competitions</h2>
-        <p>Today’s top 5 free Australian competitions will appear here.</p>
+      <div class="brutal-card">
+        <h2 class="section-title">Competitions</h2>
+        <p class="font-bold">Today’s top 5 free Australian competitions will appear here.</p>
       </div>
 
-      <div class="card">
-        <h3>Yesterday’s Top 5</h3>
-        <p>Previous competitions will appear here.</p>
+      <div class="brutal-card">
+        <h3 class="card-title">Yesterday’s Top 5</h3>
+        <p class="font-bold">Previous competitions will appear here.</p>
       </div>
     </section>
 
     <section id="projects" class="tab">
-      <div class="card">
-        <h2>Projects</h2>
-        <p>Commercial property alerts, businesses for sale, and active projects will appear here.</p>
+      <div class="brutal-card">
+        <h2 class="section-title">Projects</h2>
+        <p class="font-bold">Commercial property alerts, businesses for sale, and active projects will appear here.</p>
       </div>
     </section>
 
     <section id="fitness" class="tab">
-      <div class="card">
-        <h2>Fitness</h2>
-        <p>Gym activity, goals, weight tracking and progress review will appear here.</p>
+      <div class="brutal-card">
+        <h2 class="section-title">Fitness</h2>
+        <p class="font-bold">Gym activity, goals, weight tracking and progress review will appear here.</p>
       </div>
     </section>
 
     <section id="reading" class="tab">
-      <div class="card">
-        <h2>Reading</h2>
-        <p>Important reads, summaries, news and tailored learning content will appear here.</p>
+      <div class="brutal-card">
+        <h2 class="section-title">Reading</h2>
+        <p class="font-bold">Important reads, summaries, news and tailored learning content will appear here.</p>
       </div>
     </section>
+
   </main>
 
   <script>
