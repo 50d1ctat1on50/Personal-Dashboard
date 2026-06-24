@@ -1,0 +1,50 @@
+const CYCLE_START = '2026-06-29';
+const ROUTINES = [
+ {day:1,events:[['05:00','05:00','Wake'],['05:00','07:00','Getting kids ready for school'],['07:00','16:00','Work'],['17:00','18:00','Gym'],['21:00','21:00','Bedtime']]},
+ {day:2,events:[['04:40','04:40','Wake'],['05:00','06:00','Gym'],['07:00','16:00','Work'],['21:00','21:00','Bedtime']]},
+ {day:3,events:[['04:40','04:40','Wake'],['05:00','06:00','Gym'],['07:00','16:00','Work'],['16:30','17:00','Collect kids from school'],['21:00','21:00','Bedtime']]},
+ {day:4,events:[['05:00','05:00','Wake'],['05:00','07:00','Getting kids ready for school'],['07:00','16:00','Work'],['16:30','17:00','Collect kids from school'],['21:00','21:00','Bedtime']]},
+ {day:5,events:[['05:00','05:00','Wake'],['05:00','08:00','Getting kids ready for school'],['08:00','09:00','Take kids to school'],['17:00','18:00','Gym'],['21:00','21:00','Bedtime']]},
+ {day:6,events:[['06:00','06:00','Wake'],['07:00','08:00','Gym'],['21:00','21:00','Bedtime']]},
+ {day:7,events:[['06:00','06:00','Wake'],['21:00','21:00','Bedtime']]},
+ {day:8,events:[['05:00','05:00','Wake'],['05:45','14:15','Work'],['14:45','15:15','Collect kids from school'],['15:45','16:30','Blaze dance'],['21:00','21:00','Bedtime']]},
+ {day:9,events:[['05:00','05:00','Wake'],['05:00','07:00','Getting kids ready for school'],['07:00','07:30','Take kids to OSH'],['07:30','16:00','Work'],['16:30','17:00','Collect kids from school'],['21:00','21:00','Bedtime']]},
+ {day:10,events:[['05:00','05:00','Wake'],['05:00','07:00','Getting kids ready for school'],['07:00','16:00','Work'],['17:00','18:00','Gym'],['21:00','21:00','Bedtime']]},
+ {day:11,events:[['04:40','04:40','Wake'],['05:00','06:00','Gym'],['07:00','16:00','Work'],['21:00','21:00','Bedtime']]},
+ {day:12,events:[['05:00','05:00','Wake'],['05:45','14:15','Work'],['14:45','15:15','Collect kids from school'],['16:00','17:00','Superkick'],['21:00','21:00','Bedtime']]},
+ {day:13,events:[['06:00','06:00','Wake'],['21:00','21:00','Bedtime']]},
+ {day:14,events:[['06:00','06:00','Wake'],['21:00','21:00','Bedtime']]}
+];
+const $ = id => document.getElementById(id);
+const store = { get:k=>JSON.parse(localStorage.getItem(k)||'[]'), set:(k,v)=>localStorage.setItem(k,JSON.stringify(v)) };
+const toMin=t=>{let [h,m]=t.split(':').map(Number);return h*60+m};
+const toTime=m=>String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0');
+const fmt=d=>d.toLocaleDateString('en-AU',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+const iso=d=>new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,10);
+function cycleDay(date){const start=new Date(CYCLE_START+'T00:00:00');const diff=Math.floor((date-start)/86400000);return ((diff%14)+14)%14;}
+function routineFor(date){return ROUTINES[cycleDay(date)];}
+function routineEvents(date){return routineFor(date).events.map((e,i)=>({id:'r'+i,date:iso(date),start:e[0],end:e[1],title:e[2],type:'routine'}));}
+function customEvents(date){return store.get('calendarEvents').filter(e=>e.date===iso(date));}
+function tasks(){return store.get('todoTasks');}
+function freeWindows(events){
+ const active=events.filter(e=>e.start!==e.end).sort((a,b)=>toMin(a.start)-toMin(b.start));
+ const wake=events.find(e=>/wake/i.test(e.title))?.start || '05:00';
+ const bed=events.find(e=>/bedtime/i.test(e.title))?.start || '21:00';
+ let cursor=toMin(wake), endDay=toMin(bed), free=[];
+ for(const e of active){let s=toMin(e.start), en=toMin(e.end); if(s>cursor) free.push({start:toTime(cursor),end:toTime(s),mins:s-cursor,title:'Free Time Window',type:'free'}); cursor=Math.max(cursor,en)}
+ if(cursor<endDay) free.push({start:toTime(cursor),end:toTime(endDay),mins:endDay-cursor,title:'Free Time Window',type:'free'}); return free;
+}
+function todayBlocks(date){const events=[...routineEvents(date),...customEvents(date)];return [...events,...freeWindows(events)].sort((a,b)=>toMin(a.start)-toMin(b.start));}
+function render(){const date=new Date(($('plannerDate')?.value)||new Date()); if($('plannerDate')) $('plannerDate').value=iso(date); $('plannerTitle').textContent=`Day ${routineFor(date).day} - ${fmt(date)}`; renderTimeline(date); renderTodos(); renderSuggestions(date);}
+function renderTimeline(date){const el=$('calendarTimeline'); el.innerHTML=''; todayBlocks(date).forEach(b=>{const div=document.createElement('div');div.className='calendar-block '+(b.type||'');div.innerHTML=`<div class="block-time">${b.start}${b.start===b.end?'':' - '+b.end}</div><div class="block-title">${b.title}${b.mins?` (${b.mins} mins)`:''}</div>${b.type==='task'?`<div class="block-actions"><button class="planner-btn" onclick="completeTask('${b.taskId}','${b.id}')">Mark completed</button></div>`:''}`;el.appendChild(div)});}
+function renderTodos(){const el=$('todoList');const open=tasks().filter(t=>!t.completed&&!t.scheduled);el.innerHTML=open.length?'':'<p class="empty-note">No unscheduled tasks.</p>';open.forEach(t=>{const d=document.createElement('div');d.className='todo-item';d.innerHTML=`<b>${t.title}</b><div class="todo-meta">${t.minutes} mins</div><div class="block-actions"><button class="planner-btn" onclick="deleteTask('${t.id}')">Delete</button></div>`;el.appendChild(d)});}
+function renderSuggestions(date){const el=$('suggestions'); const open=tasks().filter(t=>!t.completed&&!t.scheduled); const days=[1,2,3].map(n=>{let d=new Date(date); d.setDate(d.getDate()+n); return d}); let html='';
+ for(const task of open){for(const d of days){const win=freeWindows([...routineEvents(d),...customEvents(d)]).find(w=>w.mins>=task.minutes); if(win){html+=`<div class="suggestion"><b>${task.title}</b><div class="todo-meta">Suggested ${fmt(d)} ${win.start}-${toTime(toMin(win.start)+Number(task.minutes))}</div><button class="planner-btn primary" onclick="scheduleTask('${task.id}','${iso(d)}','${win.start}')">Approve</button></div>`;break;}}}
+ el.innerHTML=html||'<p class="empty-note">No suggested tasks fit in the next 3 days.</p>';}
+function addTask(){const title=$('taskTitle').value.trim();const minutes=Number($('taskMinutes').value); if(!title||!minutes)return; const all=tasks(); all.push({id:crypto.randomUUID(),title,minutes,completed:false,scheduled:false}); store.set('todoTasks',all); $('taskTitle').value='';$('taskMinutes').value='';render();}
+function scheduleTask(id,date,start){const all=tasks();const task=all.find(t=>t.id===id);if(!task)return;const end=toTime(toMin(start)+Number(task.minutes));const events=store.get('calendarEvents');const event={id:crypto.randomUUID(),taskId:id,date,start,end,title:task.title,type:'task'};events.push(event);task.scheduled=true;task.eventId=event.id;store.set('calendarEvents',events);store.set('todoTasks',all);render();}
+function completeTask(taskId,eventId){store.set('todoTasks',tasks().map(t=>t.id===taskId?{...t,completed:true,scheduled:false}:t));store.set('calendarEvents',store.get('calendarEvents').filter(e=>e.id!==eventId));render();}
+function deleteTask(id){store.set('todoTasks',tasks().filter(t=>t.id!==id));render();}
+function addCalendarItem(){const date=$('customDate').value,start=$('customStart').value,end=$('customEnd').value,title=$('customTitle').value.trim(); if(!date||!start||!end||!title)return; const events=store.get('calendarEvents');events.push({id:crypto.randomUUID(),date,start,end,title,type:'custom'});store.set('calendarEvents',events);$('customTitle').value='';render();}
+function rollOverMissedTasks(){const today=iso(new Date());const events=store.get('calendarEvents');const overdue=events.filter(e=>e.type==='task'&&e.date<today);if(!overdue.length)return;store.set('todoTasks',tasks().map(t=>overdue.some(e=>e.taskId===t.id)?{...t,scheduled:false,eventId:null}:t));store.set('calendarEvents',events.filter(e=>!(e.type==='task'&&e.date<today)));}
+document.addEventListener('DOMContentLoaded',()=>{rollOverMissedTasks(); if($('plannerDate')) $('plannerDate').addEventListener('change',render); render();});
