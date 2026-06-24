@@ -135,6 +135,7 @@ function render() {
   renderTimeline(date);
   renderTodos();
   renderSuggestions(date);
+  renderPlanForDay(date);
 }
 
 function renderTimeline(date) {
@@ -390,6 +391,175 @@ function addCalendarItem() {
   render();
 }
 
+function getTodayAssignedTasks(date) {
+  const todayIso = iso(date);
+
+  return store.get('calendarEvents')
+    .filter(e => e.date === todayIso && e.type === 'task')
+    .sort((a, b) => toMin(a.start) - toMin(b.start));
+}
+
+function getYesterdayDiary(date) {
+  const yesterday = new Date(date);
+  yesterday.setDate(yesterday.getDate() - 1);
+
+  const diaryEntries = JSON.parse(localStorage.getItem('dailyDiaryEntries') || '{}');
+  return diaryEntries[iso(yesterday)]?.entry || '';
+}
+
+function getFreeWindowsText(date) {
+  const windows = freeWindows([...routineEvents(date), ...customEvents(date)]);
+
+  if (!windows.length) {
+    return 'No clear free windows today.';
+  }
+
+  return windows
+    .map(w => `${w.start}-${w.end} (${w.mins} mins)`)
+    .join(', ');
+}
+
+function getTodayScheduleText(date) {
+  return todayBlocks(date)
+    .filter(b => b.type !== 'free')
+    .map(b => `${b.start}${b.start === b.end ? '' : '-' + b.end}: ${b.title}`)
+    .join('\n');
+}
+
+function getTodayTasksText(date) {
+  const assigned = getTodayAssignedTasks(date);
+
+  if (!assigned.length) {
+    return 'No assigned tasks today.';
+  }
+
+  return assigned
+    .map(t => `${t.start}-${t.end}: ${t.title}`)
+    .join('\n');
+}
+
+function renderPlanForDay(date) {
+  const assignedEl = $('todayAssignedTasks');
+  const suggestionsEl = $('dailySuggestions');
+
+  if (!assignedEl || !suggestionsEl) return;
+
+  const assigned = getTodayAssignedTasks(date);
+
+  if (assigned.length) {
+    assignedEl.innerHTML = assigned.map(t => `
+      <div class="todo-item">
+        <b>${t.title}</b>
+        <div class="todo-meta">${t.start} - ${t.end}</div>
+      </div>
+    `).join('');
+  } else {
+    assignedEl.innerHTML = `<p class="empty-note">No tasks assigned for today yet.</p>`;
+  }
+
+  loadDailyAgentSuggestion(date);
+}
+
+async function loadDailyAgentSuggestion(date) {
+  const suggestionsEl = $('dailySuggestions');
+  if (!suggestionsEl) return;
+
+  const diary = getYesterdayDiary(date);
+  const todaySchedule = getTodayScheduleText(date);
+  const todayTasks = getTodayTasksText(date);
+  const freeWindowsText = getFreeWindowsText(date);
+
+  if (!diary) {
+    suggestionsEl.innerHTML = `
+      <strong>Plan for the Day:</strong>
+      No diary entry was saved yesterday. Add a Daily Diary entry tonight to improve tomorrow’s AI plan.
+    `;
+    return;
+  }
+
+  suggestionsEl.innerHTML = 'Generating AI plan for the day...';
+
+  try {
+    const response = await fetch('/.netlify/functions/daily-agent', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        diary,
+        todaySchedule,
+        todayTasks,
+        freeWindows: freeWindowsText
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.details || data.error || 'Agent request failed');
+    }
+
+    suggestionsEl.innerHTML = `
+      <strong>AI Plan for the Day:</strong>
+      ${data.summary || 'No AI summary returned.'}
+    `;
+  } catch (error) {
+    suggestionsEl.innerHTML = `
+      <strong>Plan for the Day:</strong>
+      AI plan could not load. Check that your Netlify Function is deployed and your AI Gateway/OpenAI setup is active.
+    `;
+  }
+}
+
+function saveDailyDiary() {
+  const input = $('dailyDiaryInput');
+  const message = $('diarySavedMessage');
+
+  if (!input || !message) return;
+
+  const text = input.value.trim();
+  const today = iso(new Date());
+
+  if (!text) {
+    message.innerHTML = 'Write a short diary entry first.';
+    return;
+  }
+
+  const diaryEntries = JSON.parse(localStorage.getItem('dailyDiaryEntries') || '{}');
+
+  diaryEntries[today] = {
+    date: today,
+    entry: text,
+    savedAt: new Date().toISOString()
+  };
+
+  localStorage.setItem('dailyDiaryEntries', JSON.stringify(diaryEntries));
+
+  message.innerHTML = `
+    <strong>Saved:</strong>
+    This diary entry will help shape tomorrow’s suggested priorities.
+  `;
+}
+
+function loadDailyDiary() {
+  const input = $('dailyDiaryInput');
+  const count = $('diaryCount');
+
+  if (!input || !count) return;
+
+  const today = iso(new Date());
+  const diaryEntries = JSON.parse(localStorage.getItem('dailyDiaryEntries') || '{}');
+
+  if (diaryEntries[today]) {
+    input.value = diaryEntries[today].entry;
+    count.innerText = `${input.value.length}/300`;
+  }
+
+  input.addEventListener('input', () => {
+    count.innerText = `${input.value.length}/300`;
+  });
+}
+
 function rollOverMissedTasks() {
   const today = iso(new Date());
   const events = store.get('calendarEvents');
@@ -417,6 +587,7 @@ function rollOverMissedTasks() {
 
 document.addEventListener('DOMContentLoaded', () => {
   rollOverMissedTasks();
+  loadDailyDiary();
 
   if ($('plannerDate')) {
     $('plannerDate').addEventListener('change', render);
