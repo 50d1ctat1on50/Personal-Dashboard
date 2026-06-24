@@ -7,40 +7,66 @@ const DEFAULT_DATA = {
 };
 
 exports.handler = async function (event) {
-  const store = getStore("personal-dashboard");
-  const key = "today-page-data";
+  try {
+    const store = getStore({
+      name: "personal-dashboard",
+      consistency: "strong"
+    });
 
-  if (event.httpMethod === "GET") {
-    const saved = await store.get(key, { type: "json" });
+    const key = "today-page-data";
+
+    if (event.httpMethod === "GET") {
+      const saved = await store.get(key, { type: "json" });
+
+      return {
+        statusCode: 200,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(saved || DEFAULT_DATA)
+      };
+    }
+
+    if (event.httpMethod === "POST") {
+      const incoming = JSON.parse(event.body || "{}");
+
+      const data = {
+        calendarEvents: Array.isArray(incoming.calendarEvents) ? incoming.calendarEvents : [],
+        todoTasks: Array.isArray(incoming.todoTasks) ? incoming.todoTasks : [],
+        dailyDiaryEntries: incoming.dailyDiaryEntries || {}
+      };
+
+      await store.setJSON(key, data);
+
+      const check = await store.get(key, { type: "json" });
+
+      return {
+        statusCode: 200,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          success: true,
+          savedAt: new Date().toISOString(),
+          counts: {
+            calendarEvents: check?.calendarEvents?.length || 0,
+            todoTasks: check?.todoTasks?.length || 0,
+            diaryEntries: Object.keys(check?.dailyDiaryEntries || {}).length
+          }
+        })
+      };
+    }
 
     return {
-      statusCode: 200,
-      body: JSON.stringify(saved || DEFAULT_DATA)
-    };
-  }
-
-  if (event.httpMethod === "POST") {
-    const incoming = JSON.parse(event.body || "{}");
-
-    const data = {
-      calendarEvents: incoming.calendarEvents || [],
-      todoTasks: incoming.todoTasks || [],
-      dailyDiaryEntries: incoming.dailyDiaryEntries || {}
+      statusCode: 405,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ error: "Method not allowed" })
     };
 
-    await store.setJSON(key, data);
-
+  } catch (error) {
     return {
-      statusCode: 200,
+      statusCode: 500,
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        success: true,
-        savedAt: new Date().toISOString()
+        error: "Dashboard data function failed",
+        details: error.message
       })
     };
   }
-
-  return {
-    statusCode: 405,
-    body: JSON.stringify({ error: "Method not allowed" })
-  };
 };
