@@ -500,6 +500,18 @@ li {
   text-decoration: line-through;
   color: var(--muted);
 }
+.diary-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.diary-summary.saved {
+  background: linear-gradient(135deg, rgba(0,255,140,0.14), rgba(0,255,209,0.08));
+  border-color: rgba(0,255,140,0.55);
+  color: #0f5132;
+  font-weight: 700;
+}
 /* ==================================================
    COMPETITIONS PAGE
 ================================================== */
