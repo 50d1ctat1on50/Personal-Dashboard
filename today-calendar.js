@@ -19,10 +19,45 @@ const ROUTINES = [
 
 const $ = id => document.getElementById(id);
 
-const store = {
-  get: k => JSON.parse(localStorage.getItem(k) || '[]'),
-  set: (k, v) => localStorage.setItem(k, JSON.stringify(v))
+let dashboardData = {
+  calendarEvents: [],
+  todoTasks: [],
+  dailyDiaryEntries: {}
 };
+
+const DATA_ENDPOINT = '/.netlify/functions/dashboard-data';
+
+async function loadDashboardData() {
+  try {
+    const response = await fetch(DATA_ENDPOINT);
+    const data = await response.json();
+
+    dashboardData = {
+      calendarEvents: data.calendarEvents || [],
+      todoTasks: data.todoTasks || [],
+      dailyDiaryEntries: data.dailyDiaryEntries || {}
+    };
+
+    // Local backup only
+    localStorage.setItem('dashboardDataBackup', JSON.stringify(dashboardData));
+  } catch (error) {
+    dashboardData = JSON.parse(localStorage.getItem('dashboardDataBackup') || JSON.stringify(dashboardData));
+  }
+}
+
+async function saveDashboardData() {
+  localStorage.setItem('dashboardDataBackup', JSON.stringify(dashboardData));
+
+  try {
+    await fetch(DATA_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(dashboardData)
+    });
+  } catch (error) {
+    console.warn('Could not save dashboard data to Netlify Blob.', error);
+  }
+}
 
 const toMin = t => {
   const [h, m] = t.split(':').map(Number);
@@ -68,11 +103,11 @@ function routineEvents(date) {
 }
 
 function customEvents(date) {
-  return store.get('calendarEvents').filter(e => e.date === iso(date));
+  return dashboardData.calendarEvents.filter(e => e.date === iso(date));
 }
 
 function tasks() {
-  return store.get('todoTasks');
+  return dashboardData.todoTasks;
 }
 
 function freeWindows(events) {
@@ -126,9 +161,7 @@ function todayBlocks(date) {
 function render() {
   const date = new Date(($('plannerDate')?.value) || new Date());
 
-  if ($('plannerDate')) {
-    $('plannerDate').value = iso(date);
-  }
+  if ($('plannerDate')) $('plannerDate').value = iso(date);
 
   if ($('plannerTitle')) {
     $('plannerTitle').textContent = `Day ${routineFor(date).day} - ${fmt(date)}`;
@@ -151,12 +184,8 @@ function renderTimeline(date) {
     div.className = 'calendar-block ' + (b.type || '');
 
     div.innerHTML = `
-      <div class="block-time">
-        ${b.start}${b.start === b.end ? '' : ' - ' + b.end}
-      </div>
-      <div class="block-title">
-        ${b.title}${b.mins ? ` (${b.mins} mins)` : ''}
-      </div>
+      <div class="block-time">${b.start}${b.start === b.end ? '' : ' - ' + b.end}</div>
+      <div class="block-title">${b.title}${b.mins ? ` (${b.mins} mins)` : ''}</div>
       ${b.type === 'task' ? `
         <div class="block-actions">
           <button class="planner-btn" onclick="completeTask('${b.taskId}','${b.id}')">
@@ -176,9 +205,7 @@ function renderTodos() {
 
   const open = tasks().filter(t => !t.completed && !t.scheduled);
 
-  el.innerHTML = open.length
-    ? ''
-    : '<p class="empty-note">No unscheduled tasks.</p>';
+  el.innerHTML = open.length ? '' : '<p class="empty-note">No unscheduled tasks.</p>';
 
   open.forEach(t => {
     const d = document.createElement('div');
@@ -202,7 +229,7 @@ function renderSuggestions(date) {
 
   const open = tasks().filter(t => !t.completed && !t.scheduled);
 
-  const days = [1, 2, 3, 4, 5, 6, 7].map(n => {
+  const days = [1,2,3,4,5,6,7].map(n => {
     const d = new Date(date);
     d.setDate(d.getDate() + n);
     return d;
@@ -261,15 +288,13 @@ function scheduleSelectedTask(taskId, selectId) {
   scheduleTask(taskId, date, start);
 }
 
-function addTask() {
+async function addTask() {
   const title = $('taskTitle').value.trim();
   const minutes = Number($('taskMinutes').value);
 
   if (!title || !minutes) return;
 
-  const all = tasks();
-
-  all.push({
+  dashboardData.todoTasks.push({
     id: crypto.randomUUID(),
     title,
     minutes,
@@ -277,22 +302,18 @@ function addTask() {
     scheduled: false
   });
 
-  store.set('todoTasks', all);
-
   $('taskTitle').value = '';
   $('taskMinutes').value = '';
 
+  await saveDashboardData();
   render();
 }
 
-function scheduleTask(id, date, start) {
-  const all = tasks();
-  const task = all.find(t => t.id === id);
-
+async function scheduleTask(id, date, start) {
+  const task = dashboardData.todoTasks.find(t => t.id === id);
   if (!task) return;
 
   const end = toTime(toMin(start) + Number(task.minutes));
-  const events = store.get('calendarEvents');
 
   const event = {
     id: crypto.randomUUID(),
@@ -304,22 +325,19 @@ function scheduleTask(id, date, start) {
     type: 'task'
   };
 
-  events.push(event);
+  dashboardData.calendarEvents.push(event);
 
   task.scheduled = true;
   task.eventId = event.id;
 
-  store.set('calendarEvents', events);
-  store.set('todoTasks', all);
+  await saveDashboardData();
 
   notifyIfToday(task.title, start, end, date);
-
   render();
 }
 
 function notifyIfToday(title, start, end, date) {
   const today = iso(new Date());
-
   if (date !== today) return;
 
   if (!('Notification' in window)) {
@@ -346,34 +364,26 @@ function notifyIfToday(title, start, end, date) {
   }
 }
 
-function completeTask(taskId, eventId) {
-  store.set(
-    'todoTasks',
-    tasks().map(t =>
-      t.id === taskId
-        ? {...t, completed: true, scheduled: false}
-        : t
-    )
+async function completeTask(taskId, eventId) {
+  dashboardData.todoTasks = dashboardData.todoTasks.map(t =>
+    t.id === taskId ? {...t, completed: true, scheduled: false} : t
   );
 
-  store.set(
-    'calendarEvents',
-    store.get('calendarEvents').filter(e => e.id !== eventId)
-  );
+  dashboardData.calendarEvents =
+    dashboardData.calendarEvents.filter(e => e.id !== eventId);
 
+  await saveDashboardData();
   render();
 }
 
-function deleteTask(id) {
-  store.set(
-    'todoTasks',
-    tasks().filter(t => t.id !== id)
-  );
+async function deleteTask(id) {
+  dashboardData.todoTasks = dashboardData.todoTasks.filter(t => t.id !== id);
 
+  await saveDashboardData();
   render();
 }
 
-function addCalendarItem() {
+async function addCalendarItem() {
   const date = $('customDate').value;
   const start = $('customStart').value;
   const end = $('customEnd').value;
@@ -381,9 +391,7 @@ function addCalendarItem() {
 
   if (!date || !start || !end || !title) return;
 
-  const events = store.get('calendarEvents');
-
-  events.push({
+  dashboardData.calendarEvents.push({
     id: crypto.randomUUID(),
     date,
     start,
@@ -392,23 +400,22 @@ function addCalendarItem() {
     type: 'custom'
   });
 
-  store.set('calendarEvents', events);
-
   $('customTitle').value = '';
 
+  await saveDashboardData();
   render();
 }
 
 function getTodayAssignedTasks(date) {
   const todayIso = iso(date);
 
-  return store.get('calendarEvents')
+  return dashboardData.calendarEvents
     .filter(e => e.date === todayIso && e.type === 'task')
     .sort((a, b) => toMin(a.start) - toMin(b.start));
 }
 
 function getDiaryEntries() {
-  return JSON.parse(localStorage.getItem('dailyDiaryEntries') || '{}');
+  return dashboardData.dailyDiaryEntries || {};
 }
 
 function saveDiaryEntries(entries) {
@@ -419,7 +426,7 @@ function saveDiaryEntries(entries) {
     trimmed[key] = entries[key];
   });
 
-  localStorage.setItem('dailyDiaryEntries', JSON.stringify(trimmed));
+  dashboardData.dailyDiaryEntries = trimmed;
 }
 
 function getYesterdayDiary(date) {
@@ -427,7 +434,6 @@ function getYesterdayDiary(date) {
   yesterday.setDate(yesterday.getDate() - 1);
 
   const diaryEntries = getDiaryEntries();
-
   return diaryEntries[iso(yesterday)]?.entry || '';
 }
 
@@ -462,25 +468,17 @@ function getUpcomingThreeDaysCalendarText(date) {
 function getOutstandingTodoText() {
   const open = tasks().filter(t => !t.completed && !t.scheduled);
 
-  if (!open.length) {
-    return 'No outstanding unscheduled to-do tasks.';
-  }
+  if (!open.length) return 'No outstanding unscheduled to-do tasks.';
 
-  return open
-    .map(t => `${t.title} (${t.minutes} mins)`)
-    .join('\n');
+  return open.map(t => `${t.title} (${t.minutes} mins)`).join('\n');
 }
 
 function getFreeWindowsText(date) {
   const windows = freeWindows([...routineEvents(date), ...customEvents(date)]);
 
-  if (!windows.length) {
-    return 'No clear free windows today.';
-  }
+  if (!windows.length) return 'No clear free windows today.';
 
-  return windows
-    .map(w => `${w.start}-${w.end} (${w.mins} mins)`)
-    .join(', ');
+  return windows.map(w => `${w.start}-${w.end} (${w.mins} mins)`).join(', ');
 }
 
 function getTodayScheduleText(date) {
@@ -493,13 +491,9 @@ function getTodayScheduleText(date) {
 function getTodayTasksText(date) {
   const assigned = getTodayAssignedTasks(date);
 
-  if (!assigned.length) {
-    return 'No assigned tasks today.';
-  }
+  if (!assigned.length) return 'No assigned tasks today.';
 
-  return assigned
-    .map(t => `${t.start}-${t.end}: ${t.title}`)
-    .join('\n');
+  return assigned.map(t => `${t.start}-${t.end}: ${t.title}`).join('\n');
 }
 
 function renderPlanForDay(date) {
@@ -526,7 +520,6 @@ function renderPlanForDay(date) {
 
 async function loadDailyAgentSuggestion(date) {
   const suggestionsEl = $('dailySuggestions');
-
   if (!suggestionsEl) return;
 
   const diary = getYesterdayDiary(date);
@@ -550,9 +543,7 @@ async function loadDailyAgentSuggestion(date) {
   try {
     const response = await fetch('/.netlify/functions/daily-agent', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         diary,
         diaryArchive,
@@ -582,7 +573,12 @@ async function loadDailyAgentSuggestion(date) {
   }
 }
 
-function saveDailyDiary() {
+function generatePlanNow() {
+  const date = new Date(($('plannerDate')?.value) || new Date());
+  loadDailyAgentSuggestion(date);
+}
+
+async function saveDailyDiary() {
   const input = $('dailyDiaryInput');
   const message = $('diarySavedMessage');
 
@@ -622,11 +618,8 @@ function saveDailyDiary() {
     ✅ Diary saved successfully<br>
     Saved: ${savedTime}
   `;
-}
 
-function generatePlanNow() {
-  const date = new Date(($('plannerDate')?.value) || new Date());
-  loadDailyAgentSuggestion(date);
+  await saveDashboardData();
 }
 
 function loadDailyDiary() {
@@ -648,33 +641,31 @@ function loadDailyDiary() {
   });
 }
 
-function rollOverMissedTasks() {
+async function rollOverMissedTasks() {
   const today = iso(new Date());
-  const events = store.get('calendarEvents');
 
-  const overdue = events.filter(e =>
+  const overdue = dashboardData.calendarEvents.filter(e =>
     e.type === 'task' && e.date < today
   );
 
   if (!overdue.length) return;
 
-  store.set(
-    'todoTasks',
-    tasks().map(t =>
-      overdue.some(e => e.taskId === t.id)
-        ? {...t, scheduled: false, eventId: null}
-        : t
-    )
+  dashboardData.todoTasks = dashboardData.todoTasks.map(t =>
+    overdue.some(e => e.taskId === t.id)
+      ? {...t, scheduled: false, eventId: null}
+      : t
   );
 
-  store.set(
-    'calendarEvents',
-    events.filter(e => !(e.type === 'task' && e.date < today))
-  );
+  dashboardData.calendarEvents =
+    dashboardData.calendarEvents.filter(e => !(e.type === 'task' && e.date < today));
+
+  await saveDashboardData();
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  rollOverMissedTasks();
+document.addEventListener('DOMContentLoaded', async () => {
+  await loadDashboardData();
+  await rollOverMissedTasks();
+
   loadDailyDiary();
 
   if ($('plannerDate')) {
