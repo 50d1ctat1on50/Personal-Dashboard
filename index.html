@@ -134,16 +134,30 @@
     </section>
 
     <section id="competitions" class="tab">
-      <div class="card glass neon">
-        <h2>Today’s Top 5 Competitions</h2>
-        <p>Today’s free Australian competition links will appear here.</p>
-      </div>
 
-      <div class="card glass">
-        <h2>Yesterday’s Top 5</h2>
-        <p>Previous competition links will appear here.</p>
-      </div>
-    </section>
+  <div class="card glass neon">
+    <h2>Today's Top 5 Free Australian Competitions</h2>
+    <p>
+      Daily selection of free, simple-entry Australian competitions.
+    </p>
+
+    <div id="todayCompetitions" class="competition-list">
+      Loading today's competitions...
+    </div>
+  </div>
+
+  <div class="card glass">
+    <h2>Yesterday's Top 5</h2>
+    <p>
+      Previous daily competition selections.
+    </p>
+
+    <div id="yesterdayCompetitions" class="competition-list">
+      Loading yesterday's competitions...
+    </div>
+  </div>
+
+</section>
 
     <section id="projects" class="tab">
       <div class="card glass">
@@ -190,6 +204,7 @@
   </script>
 
   <script src="today-calendar.js"></script>
+  <script src="competitions.js"></script>
 
 </body>
 </html>
