@@ -1,3 +1,42 @@
+const MODELS = [
+  "gemini-2.5-flash",
+  "gemini-2.0-flash",
+  "gemini-1.5-flash"
+];
+
+async function callGemini(model, prompt) {
+  const response = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${process.env.GEMINI_API_KEY}`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        contents: [
+          {
+            parts: [
+              { text: prompt }
+            ]
+          }
+        ],
+        generationConfig: {
+          temperature: 0.6,
+          maxOutputTokens: 300
+        }
+      })
+    }
+  );
+
+  const data = await response.json();
+
+  return {
+    ok: response.ok,
+    status: response.status,
+    data
+  };
+}
+
 exports.handler = async function (event) {
   if (event.httpMethod !== "POST") {
     return {
@@ -64,48 +103,44 @@ Be practical, calm, positive and action-focused.
 Do not diagnose or give medical advice.
 `;
 
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [
-                { text: prompt }
-              ]
-            }
-          ],
-          generationConfig: {
-            temperature: 0.6,
-            maxOutputTokens: 300
-          }
-        })
+    let lastError = null;
+
+    for (const model of MODELS) {
+      const result = await callGemini(model, prompt);
+
+      if (result.ok) {
+        const summary =
+          result.data?.candidates?.[0]?.content?.parts?.[0]?.text ||
+          "No AI summary returned.";
+
+        return {
+          statusCode: 200,
+          body: JSON.stringify({
+            summary,
+            modelUsed: model
+          })
+        };
       }
-    );
 
-    const data = await response.json();
-
-    if (!response.ok) {
-      return {
-        statusCode: response.status,
-        body: JSON.stringify({
-          error: "Gemini request failed.",
-          details: data?.error?.message || "Unknown Gemini error"
-        })
+      lastError = {
+        model,
+        status: result.status,
+        message: result.data?.error?.message || "Unknown Gemini error"
       };
+
+      // Only retry on temporary/load errors
+      if (![429, 500, 503].includes(result.status)) {
+        break;
+      }
     }
 
-    const summary =
-      data?.candidates?.[0]?.content?.parts?.[0]?.text ||
-      "No AI summary returned.";
-
     return {
-      statusCode: 200,
-      body: JSON.stringify({ summary })
+      statusCode: lastError?.status || 500,
+      body: JSON.stringify({
+        error: "Gemini request failed.",
+        details: lastError?.message || "All Gemini models failed.",
+        modelTried: lastError?.model || null
+      })
     };
 
   } catch (error) {
