@@ -10,7 +10,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
 
   <link rel="stylesheet" href="style.css" />
-  <link rel="stylesheet" href="today-calendar.css" />
 </head>
 
 <body>
@@ -51,27 +50,43 @@
     <section class="mountain-divider"></section>
 
     <section id="today" class="tab active">
+
       <div class="grid">
         <div class="card glass kpi">
-          <span class="kpi-label">Daily Focus</span>
-          <strong>Plan the day</strong>
-          <p>Daily priorities, prompts, reminders and important tasks will appear here.</p>
+          <span class="kpi-label">Plan for the Day</span>
+          <strong>Today’s Priorities</strong>
+          <p>Assigned calendar tasks, reminders and suggested priorities will appear here.</p>
+
+          <div id="todayAssignedTasks" class="daily-panel">
+            Loading today’s assigned tasks...
+          </div>
+
+          <div id="dailySuggestions" class="daily-panel suggestions-panel">
+            Suggestions will appear here after yesterday’s diary entry is saved.
+          </div>
         </div>
 
-        <div class="card glass kpi neon">
-          <span class="kpi-label">Mood Check</span>
-          <strong>How do I feel?</strong>
-          <p>Capture your mindset and receive prompts for the day ahead.</p>
-        </div>
-      </div>
+        <div class="card glass kpi neon diary-card">
+          <span class="kpi-label">Daily Diary</span>
+          <strong>How did today go?</strong>
+          <p>Write a short reflection to help shape tomorrow’s plan.</p>
 
-      <div class="card glass">
-        <h2>Daily Check-In</h2>
-        <ul>
-          <li>How do I feel today?</li>
-          <li>What is one thing I need to get done?</li>
-          <li>What would make today successful?</li>
-        </ul>
+          <textarea
+            id="dailyDiaryInput"
+            class="diary-input"
+            maxlength="300"
+            placeholder="Write up to 300 characters about how your day went..."
+          ></textarea>
+
+          <div class="diary-footer">
+            <span id="diaryCount">0/300</span>
+            <button class="planner-btn primary" onclick="saveDailyDiary()">Save Diary</button>
+          </div>
+
+          <div id="diarySavedMessage" class="diary-summary">
+            Your diary entry will be used to help shape tomorrow’s priorities.
+          </div>
+        </div>
       </div>
 
       <section class="today-planner">
@@ -97,7 +112,7 @@
             <button class="planner-btn primary" onclick="addTask()">Add</button>
           </div>
 
-          <h3>Suggested for Next 3 Days</h3>
+          <h3>Suggested for Next 7 Days</h3>
           <div id="suggestions"></div>
 
           <h3>To-Do List</h3>
