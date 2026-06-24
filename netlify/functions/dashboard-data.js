@@ -9,9 +9,11 @@ const DEFAULT_DATA = {
 exports.handler = async function (event) {
   try {
     const store = getStore({
-      name: "personal-dashboard",
-      consistency: "strong"
-    });
+  name: "personal-dashboard",
+  siteID: process.env.NETLIFY_SITE_ID,
+  token: process.env.NETLIFY_TOKEN,
+  consistency: "strong"
+});
 
     const key = "today-page-data";
 
