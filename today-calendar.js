@@ -426,6 +426,56 @@ function getYesterdayDiary(date) {
 
   return diaryEntries[iso(yesterday)]?.entry || '';
 }
+function getDiaryArchiveText() {
+  const diaryEntries = getDiaryEntries();
+
+  return Object.values(diaryEntries)
+    .sort((a,b)=>a.date.localeCompare(b.date))
+    .slice(-30)
+    .map(d => `${d.date}: ${d.entry}`)
+    .join('\n');
+}
+
+function getUpcomingThreeDaysCalendarText(date) {
+  const days = [];
+
+  for(let i=1;i<=3;i++){
+
+    const d = new Date(date);
+    d.setDate(d.getDate()+i);
+
+    const schedule =
+      todayBlocks(d)
+      .filter(b => b.type !== 'free')
+      .map(
+        b =>
+          `${b.start}${b.start===b.end ? '' : '-' + b.end}: ${b.title}`
+      )
+      .join(', ');
+
+    days.push(`${fmt(d)}: ${schedule}`);
+  }
+
+  return days.join('\n');
+}
+
+function getOutstandingTodoText() {
+
+  const open =
+    tasks().filter(
+      t => !t.completed && !t.scheduled
+    );
+
+  if(!open.length){
+    return 'No outstanding tasks.';
+  }
+
+  return open
+    .map(
+      t => `${t.title} (${t.minutes} mins)`
+    )
+    .join('\n');
+}
 }
 
 function getFreeWindowsText(date) {
@@ -482,20 +532,67 @@ function renderPlanForDay(date) {
 }
 
 async function loadDailyAgentSuggestion(date) {
+
   const suggestionsEl = $('dailySuggestions');
-  if (!suggestionsEl) return;
+
+  if(!suggestionsEl) return;
 
   const diary = getYesterdayDiary(date);
-  const todaySchedule = getTodayScheduleText(date);
-  const todayTasks = getTodayTasksText(date);
-  const freeWindowsText = getFreeWindowsText(date);
 
-  if (!diary) {
-    suggestionsEl.innerHTML = `
-      <strong>Plan for the Day:</strong>
-      No diary entry was saved yesterday. Add a Daily Diary entry tonight to improve tomorrow’s AI plan.
-    `;
-    return;
+  const diaryArchive =
+    getDiaryArchiveText();
+
+  const todaySchedule =
+    getTodayScheduleText(date);
+
+  const todayTasks =
+    getTodayTasksText(date);
+
+  const freeWindowsText =
+    getFreeWindowsText(date);
+
+  const upcomingThreeDays =
+    getUpcomingThreeDaysCalendarText(date);
+
+  const outstandingTodos =
+    getOutstandingTodoText();
+
+  suggestionsEl.innerHTML =
+    'Generating AI plan for the day...';
+
+  try {
+
+    const response =
+      await fetch(
+        '/.netlify/functions/daily-agent',
+        {
+          method:'POST',
+          headers:{
+            'Content-Type':'application/json'
+          },
+          body: JSON.stringify({
+            diary,
+            diaryArchive,
+            todaySchedule,
+            todayTasks,
+            freeWindows: freeWindowsText,
+            upcomingThreeDays,
+            outstandingTodos
+          })
+        }
+      );
+
+    const data = await response.json();
+
+    suggestionsEl.innerHTML =
+      `<strong>AI Plan for the Day:</strong><br><br>${data.summary}`;
+
+  } catch(error){
+
+    suggestionsEl.innerHTML =
+      'Unable to generate AI plan.';
+  }
+}
   }
 
   suggestionsEl.innerHTML = 'Generating AI plan for the day...';
@@ -533,17 +630,72 @@ async function loadDailyAgentSuggestion(date) {
 }
 
 function saveDailyDiary() {
-  const input = $('dailyDiaryInput');
-  const message = $('diarySavedMessage');
 
-  if (!input || !message) return;
+  const input =
+    $('dailyDiaryInput');
 
-  const text = input.value.trim();
-  const today = iso(new Date());
+  const message =
+    $('diarySavedMessage');
 
-  if (!text) {
-    message.innerHTML = 'Write a short diary entry first.';
+  if(!input || !message) return;
+
+  const text =
+    input.value.trim();
+
+  const today =
+    iso(new Date());
+
+  if(!text){
+
+    message.classList.remove('saved');
+
+    message.innerHTML =
+      'Please enter a diary note first.';
+
     return;
+  }
+
+  const diaryEntries =
+    getDiaryEntries();
+
+  diaryEntries[today] = {
+    date: today,
+    entry: text,
+    savedAt: new Date().toISOString()
+  };
+
+  saveDiaryEntries(diaryEntries);
+
+  const savedTime =
+    new Date().toLocaleString(
+      'en-AU',
+      {
+        timeZone:'Australia/Perth',
+        day:'numeric',
+        month:'long',
+        year:'numeric',
+        hour:'numeric',
+        minute:'2-digit',
+        hour12:true
+      }
+    );
+
+  message.classList.add('saved');
+
+  message.innerHTML =
+    `✅ Diary saved successfully<br>
+     Saved: ${savedTime}`;
+}
+function generatePlanNow(){
+
+  const date =
+    new Date(
+      ($('plannerDate')?.value)
+      || new Date()
+    );
+
+  loadDailyAgentSuggestion(date);
+}
   }
 
   const diaryEntries = JSON.parse(localStorage.getItem('dailyDiaryEntries') || '{}');
