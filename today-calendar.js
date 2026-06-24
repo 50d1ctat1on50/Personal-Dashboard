@@ -399,12 +399,33 @@ function getTodayAssignedTasks(date) {
     .sort((a, b) => toMin(a.start) - toMin(b.start));
 }
 
+function getDiaryEntries() {
+  return JSON.parse(localStorage.getItem('dailyDiaryEntries') || '{}');
+}
+
+function saveDiaryEntries(entries) {
+  const sortedKeys = Object.keys(entries).sort().slice(-30);
+
+  const trimmed = {};
+
+  sortedKeys.forEach(key => {
+    trimmed[key] = entries[key];
+  });
+
+  localStorage.setItem(
+    'dailyDiaryEntries',
+    JSON.stringify(trimmed)
+  );
+}
+
 function getYesterdayDiary(date) {
   const yesterday = new Date(date);
   yesterday.setDate(yesterday.getDate() - 1);
 
-  const diaryEntries = JSON.parse(localStorage.getItem('dailyDiaryEntries') || '{}');
+  const diaryEntries = getDiaryEntries();
+
   return diaryEntries[iso(yesterday)]?.entry || '';
+}
 }
 
 function getFreeWindowsText(date) {
