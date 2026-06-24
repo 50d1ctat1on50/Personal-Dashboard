@@ -79,9 +79,12 @@
           ></textarea>
 
           <div class="diary-footer">
-            <span id="diaryCount">0/300</span>
-            <button class="planner-btn primary" onclick="saveDailyDiary()">Save Diary</button>
-          </div>
+  <span id="diaryCount">0/300</span>
+  <div class="diary-actions">
+    <button class="planner-btn primary" onclick="saveDailyDiary()">Save Diary</button>
+    <button class="planner-btn" onclick="generatePlanNow()">Generate Plan</button>
+  </div>
+</div>
 
           <div id="diarySavedMessage" class="diary-summary">
             Your diary entry will be used to help shape tomorrow’s priorities.
