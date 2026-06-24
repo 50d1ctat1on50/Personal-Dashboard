@@ -10,6 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
 
   <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="today-calendar.css" />
 </head>
 
 <body>
@@ -28,11 +29,11 @@
     </div>
 
     <nav>
-      <button onclick="showTab('today')" class="nav-btn active">Today</button>
-      <button onclick="showTab('competitions')" class="nav-btn">Competitions</button>
-      <button onclick="showTab('projects')" class="nav-btn">Projects</button>
-      <button onclick="showTab('fitness')" class="nav-btn">Fitness</button>
-      <button onclick="showTab('reading')" class="nav-btn">Reading</button>
+      <button onclick="showTab('today', event)" class="nav-btn active">Today</button>
+      <button onclick="showTab('competitions', event)" class="nav-btn">Competitions</button>
+      <button onclick="showTab('projects', event)" class="nav-btn">Projects</button>
+      <button onclick="showTab('fitness', event)" class="nav-btn">Fitness</button>
+      <button onclick="showTab('reading', event)" class="nav-btn">Reading</button>
     </nav>
   </aside>
 
@@ -72,6 +73,49 @@
           <li>What would make today successful?</li>
         </ul>
       </div>
+
+      <section class="today-planner">
+        <div class="planner-card">
+          <div class="planner-header">
+            <div>
+              <h2 id="plannerTitle">Today Planner</h2>
+              <div class="planner-date">Routine, tasks and free time windows</div>
+            </div>
+            <input class="planner-input" id="plannerDate" type="date" style="max-width:190px">
+          </div>
+
+          <div id="calendarTimeline" class="calendar-timeline"></div>
+        </div>
+
+        <aside class="planner-card">
+          <h3>Add To-Do Task</h3>
+
+          <input class="planner-input" id="taskTitle" placeholder="Task name, e.g. pay bill">
+
+          <div class="task-row">
+            <input class="planner-input" id="taskMinutes" type="number" min="5" step="5" placeholder="Minutes">
+            <button class="planner-btn primary" onclick="addTask()">Add</button>
+          </div>
+
+          <h3>Suggested for Next 3 Days</h3>
+          <div id="suggestions"></div>
+
+          <h3>To-Do List</h3>
+          <div id="todoList"></div>
+
+          <h3>Add Calendar Item</h3>
+
+          <input class="planner-input" id="customTitle" placeholder="Calendar item">
+          <input class="planner-input" id="customDate" type="date">
+
+          <div class="task-row">
+            <input class="planner-input" id="customStart" type="time">
+            <input class="planner-input" id="customEnd" type="time">
+          </div>
+
+          <button class="planner-btn" onclick="addCalendarItem()">Add to calendar</button>
+        </aside>
+      </section>
     </section>
 
     <section id="competitions" class="tab">
@@ -118,14 +162,19 @@
         year: "numeric"
       });
 
-    function showTab(tabName) {
+    function showTab(tabName, event) {
       document.querySelectorAll(".tab").forEach(tab => tab.classList.remove("active"));
       document.getElementById(tabName).classList.add("active");
 
       document.querySelectorAll(".nav-btn").forEach(btn => btn.classList.remove("active"));
-      event.target.classList.add("active");
+
+      if (event && event.target) {
+        event.target.classList.add("active");
+      }
     }
   </script>
+
+  <script src="today-calendar.js"></script>
 
 </body>
 </html>
