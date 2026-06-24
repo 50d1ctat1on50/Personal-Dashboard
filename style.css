@@ -496,10 +496,18 @@ li {
   font-style: italic;
 }
 
+/* your existing CSS is valid, but instead of re-pasting 500+ lines here,
+fix this section only */
+
 .completed {
   text-decoration: line-through;
   color: var(--muted);
 }
+
+/* ==================================================
+   DIARY ENHANCEMENTS
+================================================== */
+
 .diary-actions {
   display: flex;
   gap: 8px;
@@ -512,6 +520,7 @@ li {
   color: #0f5132;
   font-weight: 700;
 }
+
 /* ==================================================
    COMPETITIONS PAGE
 ================================================== */
@@ -546,11 +555,7 @@ li {
   display: grid;
   place-items: center;
   border-radius: 50%;
-  background: linear-gradient(
-    135deg,
-    var(--aqua),
-    var(--teal)
-  );
+  background: linear-gradient(135deg, var(--aqua), var(--teal));
   color: #00343a;
   font-weight: 900;
   font-size: 14px;
