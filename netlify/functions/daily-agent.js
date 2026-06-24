@@ -22,7 +22,7 @@ async function callGemini(model, prompt) {
         ],
         generationConfig: {
           temperature: 0.6,
-          maxOutputTokens: 300
+          maxOutputTokens: 700
         }
       })
     }
@@ -109,9 +109,14 @@ Do not diagnose or give medical advice.
       const result = await callGemini(model, prompt);
 
       if (result.ok) {
-        const summary =
-          result.data?.candidates?.[0]?.content?.parts?.[0]?.text ||
-          "No AI summary returned.";
+        const summaryParts =
+  result.data?.candidates?.[0]?.content?.parts || [];
+
+const summary =
+  summaryParts
+    .map(part => part.text || "")
+    .join("\n")
+    .trim() || "No AI summary returned.";
 
         return {
           statusCode: 200,
