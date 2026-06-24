@@ -49,6 +49,7 @@
 
     <section class="mountain-divider"></section>
 
+    <!-- TODAY TAB -->
     <section id="today" class="tab active">
 
       <div class="grid">
@@ -79,12 +80,13 @@
           ></textarea>
 
           <div class="diary-footer">
-  <span id="diaryCount">0/300</span>
-  <div class="diary-actions">
-    <button class="planner-btn primary" onclick="saveDailyDiary()">Save Diary</button>
-    <button class="planner-btn" onclick="generatePlanNow()">Generate Plan</button>
-  </div>
-</div>
+            <span id="diaryCount">0/300</span>
+
+            <div class="diary-actions">
+              <button class="planner-btn primary" onclick="saveDailyDiary()">Save Diary</button>
+              <button class="planner-btn" onclick="generatePlanNow()">Generate Plan</button>
+            </div>
+          </div>
 
           <div id="diarySavedMessage" class="diary-summary">
             Your diary entry will be used to help shape tomorrow’s priorities.
@@ -99,7 +101,13 @@
               <h2 id="plannerTitle">Today Planner</h2>
               <div class="planner-date">Routine, tasks and free time windows</div>
             </div>
-            <input class="planner-input" id="plannerDate" type="date" style="max-width:190px">
+
+            <input
+              class="planner-input"
+              id="plannerDate"
+              type="date"
+              style="max-width:190px"
+            >
           </div>
 
           <div id="calendarTimeline" class="calendar-timeline"></div>
@@ -108,10 +116,22 @@
         <aside class="planner-card">
           <h3>Add To-Do Task</h3>
 
-          <input class="planner-input" id="taskTitle" placeholder="Task name, e.g. pay bill">
+          <input
+            class="planner-input"
+            id="taskTitle"
+            placeholder="Task name, e.g. pay bill"
+          >
 
           <div class="task-row">
-            <input class="planner-input" id="taskMinutes" type="number" min="5" step="5" placeholder="Minutes">
+            <input
+              class="planner-input"
+              id="taskMinutes"
+              type="number"
+              min="5"
+              step="5"
+              placeholder="Minutes"
+            >
+
             <button class="planner-btn primary" onclick="addTask()">Add</button>
           </div>
 
@@ -123,12 +143,30 @@
 
           <h3>Add Calendar Item</h3>
 
-          <input class="planner-input" id="customTitle" placeholder="Calendar item">
-          <input class="planner-input" id="customDate" type="date">
+          <input
+            class="planner-input"
+            id="customTitle"
+            placeholder="Calendar item"
+          >
+
+          <input
+            class="planner-input"
+            id="customDate"
+            type="date"
+          >
 
           <div class="task-row">
-            <input class="planner-input" id="customStart" type="time">
-            <input class="planner-input" id="customEnd" type="time">
+            <input
+              class="planner-input"
+              id="customStart"
+              type="time"
+            >
+
+            <input
+              class="planner-input"
+              id="customEnd"
+              type="time"
+            >
           </div>
 
           <button class="planner-btn" onclick="addCalendarItem()">Add to calendar</button>
@@ -136,32 +174,28 @@
       </section>
     </section>
 
+    <!-- COMPETITIONS TAB -->
     <section id="competitions" class="tab">
+      <div class="card glass neon">
+        <h2>Today's Top 5 Free Australian Competitions</h2>
+        <p>Daily selection of free, simple-entry Australian competitions.</p>
 
-  <div class="card glass neon">
-    <h2>Today's Top 5 Free Australian Competitions</h2>
-    <p>
-      Daily selection of free, simple-entry Australian competitions.
-    </p>
+        <div id="todayCompetitions" class="competition-list">
+          Loading today's competitions...
+        </div>
+      </div>
 
-    <div id="todayCompetitions" class="competition-list">
-      Loading today's competitions...
-    </div>
-  </div>
+      <div class="card glass">
+        <h2>Yesterday's Top 5</h2>
+        <p>Previous daily competition selections.</p>
 
-  <div class="card glass">
-    <h2>Yesterday's Top 5</h2>
-    <p>
-      Previous daily competition selections.
-    </p>
+        <div id="yesterdayCompetitions" class="competition-list">
+          Loading yesterday's competitions...
+        </div>
+      </div>
+    </section>
 
-    <div id="yesterdayCompetitions" class="competition-list">
-      Loading yesterday's competitions...
-    </div>
-  </div>
-
-</section>
-
+    <!-- PROJECTS TAB -->
     <section id="projects" class="tab">
       <div class="card glass">
         <h2>Projects</h2>
@@ -169,6 +203,7 @@
       </div>
     </section>
 
+    <!-- FITNESS TAB -->
     <section id="fitness" class="tab">
       <div class="card glass">
         <h2>Fitness</h2>
@@ -176,6 +211,7 @@
       </div>
     </section>
 
+    <!-- READING TAB -->
     <section id="reading" class="tab">
       <div class="card glass">
         <h2>Reading</h2>
@@ -186,19 +222,31 @@
   </main>
 
   <script>
-    document.getElementById("dateText").innerText =
-      new Date().toLocaleDateString("en-AU", {
+    const dateText = document.getElementById("dateText");
+
+    if (dateText) {
+      dateText.innerText = new Date().toLocaleDateString("en-AU", {
         weekday: "long",
         day: "numeric",
         month: "long",
         year: "numeric"
       });
+    }
 
     function showTab(tabName, event) {
-      document.querySelectorAll(".tab").forEach(tab => tab.classList.remove("active"));
-      document.getElementById(tabName).classList.add("active");
+      document.querySelectorAll(".tab").forEach(tab => {
+        tab.classList.remove("active");
+      });
 
-      document.querySelectorAll(".nav-btn").forEach(btn => btn.classList.remove("active"));
+      const selectedTab = document.getElementById(tabName);
+
+      if (selectedTab) {
+        selectedTab.classList.add("active");
+      }
+
+      document.querySelectorAll(".nav-btn").forEach(btn => {
+        btn.classList.remove("active");
+      });
 
       if (event && event.target) {
         event.target.classList.add("active");
